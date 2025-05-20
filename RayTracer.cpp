@@ -15,8 +15,8 @@
 using namespace std;
 
 const float EDIST = 40.0;
-const int NUMDIV = 500;
-const int MAX_STEPS = 5;
+const int NUMDIV = 800;
+const int MAX_STEPS = 10;
 const float XMIN = -10.0;
 const float XMAX = 10.0;
 const float YMIN = -10.0;
@@ -25,13 +25,69 @@ const float YMAX = 10.0;
 vector<SceneObject*> sceneObjects;
 TextureBMP texture;
 
+glm::vec3 Shadows(Ray ray, glm::vec3 color, glm::vec3 light1Pos, glm::vec3 light2Pos, SceneObject* obj) {
+	//shadows
+	glm::vec3 light1Vec = light1Pos - ray.hit;
+	glm::vec3 light2Vec = light2Pos - ray.hit;
+	Ray shadow1Ray(ray.hit, light1Vec);
+	Ray shadow2Ray(ray.hit, light2Vec);
+	shadow1Ray.closestPt(sceneObjects);
+	shadow2Ray.closestPt(sceneObjects);
+
+	bool shadow1 = false;
+	bool shadow2 = false;
+	bool lighterShadow1 = false;
+	bool lighterShadow2 = false;
+
+	if (shadow1Ray.index >= 0 && shadow1Ray.index < sceneObjects.size()) {
+		SceneObject* shadowObj1 = sceneObjects[shadow1Ray.index];
+
+		if (shadowObj1->isRefractive() || shadowObj1->isReflective()) {
+			lighterShadow1 = true;
+		}
+	}
+
+	if (shadow2Ray.index >= 0 && shadow2Ray.index < sceneObjects.size()) {
+		SceneObject* shadowObj2 = sceneObjects[shadow2Ray.index];
+
+		if (shadowObj2->isRefractive() || shadowObj2->isReflective()) {
+			lighterShadow2 = true;
+		}
+	}
+
+	if (shadow1Ray.index > -1 && shadow1Ray.dist < glm::length(light1Vec))
+	{
+		shadow1 = true;
+	}
+	if (shadow2Ray.index > -1 && shadow2Ray.dist < glm::length(light2Vec))
+	{
+		shadow2 = true;
+	}
+
+	if (shadow1 || shadow2)
+	{
+		if (lighterShadow1 && lighterShadow2) color = 0.8f * obj->getColor();
+		else if (lighterShadow1 || lighterShadow2) color = 0.6f * obj->getColor();
+		else color = 0.3f * obj->getColor();
+	}
+	if (shadow1 && shadow2)
+	{
+		if (lighterShadow1 && lighterShadow2) color = 0.5f * obj->getColor();
+		else if (lighterShadow1 || lighterShadow2) color = 0.3f * obj->getColor();
+		else color = 0.1f * obj->getColor();
+	}
+
+	return color;
+}
+
 //---The most important function in a ray tracer! ---------------------------------- 
 //   Computes the colour value obtained by tracing a ray and finding its 
 //     closest point of intersection with objects in the scene.
 //----------------------------------------------------------------------------------
 glm::vec3 trace(Ray ray, int step) {
 	glm::vec3 backgroundCol(0);						//Background colour = (0,0,0)
-	glm::vec3 lightPos(10, 40, -3);					//Light's position
+	glm::vec3 light1Pos(20, 40, -3);					//Light's position
+	glm::vec3 light2Pos(-20, 40, -3);
 	glm::vec3 color(0);
 	SceneObject* obj;
 
@@ -64,16 +120,11 @@ glm::vec3 trace(Ray ray, int step) {
 		}
 	}
 
-	color = obj->lighting(lightPos, -ray.dir, ray.hit);
+	//SceneObjects lighting calculations
+	color = obj->lighting(light1Pos, -ray.dir, ray.hit) + obj->lighting(light2Pos, -ray.dir, ray.hit);
 
-	//shadows
-	glm::vec3 lightVec = lightPos - ray.hit;
-	Ray shadowRay(ray.hit, lightVec);
-	shadowRay.closestPt(sceneObjects);
-	if (shadowRay.index > -1 && shadowRay.dist < glm::length(lightVec))
-	{
-		color = 0.2f * obj->getColor();
-	}
+	//Custom Shadows (2 light sources)
+	color = Shadows(ray, color, light1Pos, light2Pos, obj);
 
 	if (obj->isReflective() && step < MAX_STEPS)
 	{
@@ -172,9 +223,9 @@ void initialize() {
 int main(int argc, char *argv[]) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB );
-	glutInitWindowSize(500, 500);
-	glutInitWindowPosition(20, 20);
-	glutCreateWindow("Raytracing");
+	glutInitWindowSize(800, 800);
+	glutInitWindowPosition(40, 40);
+	glutCreateWindow("Assignment 2 - nco63");
 
 	glutDisplayFunc(display);
 	initialize();
