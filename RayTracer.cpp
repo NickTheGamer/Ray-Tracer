@@ -1,5 +1,5 @@
 /*==================================================================================
-* A basic ray tracer
+* A basic ray tracer - Nicholas Coetzee
 *===================================================================================
 */
 #include <iostream>
@@ -25,7 +25,7 @@ const float YMAX = 10.0;
 vector<SceneObject*> sceneObjects;
 TextureBMP texture;
 
-glm::vec3 Shadows(Ray ray, glm::vec3 color, glm::vec3 light1Pos, glm::vec3 light2Pos, SceneObject* obj) {
+glm::vec3 shadows(Ray ray, glm::vec3 color, glm::vec3 light1Pos, glm::vec3 light2Pos, SceneObject* obj) {
 	//shadows
 	glm::vec3 light1Vec = light1Pos - ray.hit;
 	glm::vec3 light2Vec = light2Pos - ray.hit;
@@ -36,13 +36,15 @@ glm::vec3 Shadows(Ray ray, glm::vec3 color, glm::vec3 light1Pos, glm::vec3 light
 
 	bool shadow1 = false;
 	bool shadow2 = false;
+
+	//Reflective and Refractive objects cast lighter shadows
 	bool lighterShadow1 = false;
 	bool lighterShadow2 = false;
 
 	if (shadow1Ray.index >= 0 && shadow1Ray.index < sceneObjects.size()) {
 		SceneObject* shadowObj1 = sceneObjects[shadow1Ray.index];
 
-		if (shadowObj1->isRefractive() || shadowObj1->isReflective()) {
+		if (shadowObj1->isRefractive() || shadowObj1->isTransparent()) {
 			lighterShadow1 = true;
 		}
 	}
@@ -50,7 +52,7 @@ glm::vec3 Shadows(Ray ray, glm::vec3 color, glm::vec3 light1Pos, glm::vec3 light
 	if (shadow2Ray.index >= 0 && shadow2Ray.index < sceneObjects.size()) {
 		SceneObject* shadowObj2 = sceneObjects[shadow2Ray.index];
 
-		if (shadowObj2->isRefractive() || shadowObj2->isReflective()) {
+		if (shadowObj2->isRefractive() || shadowObj2->isTransparent()) {
 			lighterShadow2 = true;
 		}
 	}
@@ -80,6 +82,26 @@ glm::vec3 Shadows(Ray ray, glm::vec3 color, glm::vec3 light1Pos, glm::vec3 light
 	return color;
 }
 
+glm::vec3 refract(const glm::vec3& I, const glm::vec3& N, float index1, float index2) {
+    float index = index1 / index2;
+    glm::vec3 n = normalize(N);
+    glm::vec3 i = normalize(I);
+
+    float cosI = glm::clamp(-glm::dot(n, i), -1.0f, 1.0f);
+
+    if (cosI < 0)
+    {
+        cosI = -cosI;
+        n = -n;  // negate normalized normal
+        index = 1 / index;
+    }
+
+    float k = 1 - index * index * (1 - cosI * cosI);
+    if (k < 0) return glm::vec3(0); //'Total internal reflection'
+    else 
+        return index * i + (index * cosI - sqrt(k)) * n;
+}
+
 //---The most important function in a ray tracer! ---------------------------------- 
 //   Computes the colour value obtained by tracing a ray and finding its 
 //     closest point of intersection with objects in the scene.
@@ -98,12 +120,14 @@ glm::vec3 trace(Ray ray, int step) {
 	//Plane
 	if (ray.index == 4)
 	{
-		//Stripes
-		int stripeWidth = 5;
-		int iz = (ray.hit.z) / stripeWidth;
-		int k = iz % 2;
+		//Chequered pattern
+		int zWidth = 4;
+		int xWidth = 4;
+		int iz = (ray.hit.z) / zWidth;
+		int ix = (ray.hit.x) / xWidth;
+		int k = (iz + ix) % 2;
 		if (k == 0) color = glm::vec3(0, 1, 0);
-		else color = glm::vec3(1, 1, 0.5);
+		else color = glm::vec3(1, 0, 1);
 		obj->setColor(color);
 
 		//Texture mapping
@@ -124,8 +148,9 @@ glm::vec3 trace(Ray ray, int step) {
 	color = obj->lighting(light1Pos, -ray.dir, ray.hit) + obj->lighting(light2Pos, -ray.dir, ray.hit);
 
 	//Custom Shadows (2 light sources)
-	color = Shadows(ray, color, light1Pos, light2Pos, obj);
+	color = shadows(ray, color, light1Pos, light2Pos, obj);
 
+	//Reflectivity
 	if (obj->isReflective() && step < MAX_STEPS)
 	{
 		float rho = obj->getReflectionCoeff();
@@ -134,6 +159,49 @@ glm::vec3 trace(Ray ray, int step) {
 		Ray reflectedRay(ray.hit, reflectedDir);
 		glm::vec3 reflectedColor = trace(reflectedRay, step + 1);
 		color = color + (rho * reflectedColor);
+	}
+
+	//Transparency and refractivity
+	bool transparent = obj->isTransparent();
+	bool refractive = obj->isRefractive();
+
+	if ((transparent || refractive) && step < MAX_STEPS)
+	{
+		glm::vec3 transmittedColor;
+
+		//Need to bend ray
+		if (refractive)
+		{
+			float refractionCoeff = obj->getRefractionCoeff();
+			float refractionIndex = obj->getRefractiveIndex();
+
+			glm::vec3 normal = obj->normal(ray.hit);
+			glm::vec3 refractedDir = refract(ray.dir, normal, 1.0f, refractionIndex);
+
+			if (refractedDir != glm::vec3(0))
+			{
+				Ray refactedRay(ray.hit, refractedDir);
+				transmittedColor = refractionCoeff * trace(refactedRay, step + 1);
+			}
+
+			//Light wasn't bent, treat as transparency
+			else
+			{
+				Ray transmittedRay(ray.hit, ray.dir);
+				transmittedColor = refractionCoeff * trace(transmittedRay, step + 1);
+			}
+
+			color = (1 - refractionCoeff) * color + transmittedColor;
+		}
+
+		//Only transparent
+		else
+		{
+			float tranCoeff = obj->getTransparencyCoeff();
+			Ray transmittedRay(ray.hit, ray.dir);
+			transmittedColor = tranCoeff * trace(transmittedRay, step + 1);
+			color = (1 - tranCoeff) * color + transmittedColor;
+		}
 	}
 
 	return color;
@@ -205,19 +273,26 @@ void initialize() {
 
 	Sphere *sphere4 = new Sphere(glm::vec3(5.0, -10.0, -60.0), 5.0);
 	sphere4->setColor(glm::vec3(0.5, 1, 1));
+	sphere4->setTransparency(true, 0.8f);
 
 	Plane *plane = new Plane (glm::vec3(-20., -15, -40), //Point A
 							  glm::vec3(20., -15, -40), //Point B
 							  glm::vec3(20., -15, -200), //Point C
 							  glm::vec3(-20., -15, -200)); //Point D
-	plane->setColor(glm::vec3(0.8, 0.8, 0));
+	//plane->setColor(glm::vec3(0.8, 0.8, 0));
 	plane->setSpecularity(false);
+
+	Sphere *sphere5 = new Sphere(glm::vec3(-5, -7, -50.0), 4.0);
+	sphere5->setColor(glm::vec3(0.8, 0, 0.8));
+	sphere5->setRefractivity(true, 0.7f, 1.2f);
 
 	sceneObjects.push_back(sphere1);
 	sceneObjects.push_back(sphere2);
 	sceneObjects.push_back(sphere3);
 	sceneObjects.push_back(sphere4);
 	sceneObjects.push_back(plane);
+	
+	sceneObjects.push_back(sphere5);
 }
 
 int main(int argc, char *argv[]) {
