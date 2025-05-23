@@ -10,6 +10,7 @@
 #include "SceneObject.h"
 #include "Ray.h"
 #include "Plane.h"
+#include "Cone.h"
 #include "TextureBMP.h"
 #include <GL/freeglut.h>
 using namespace std;
@@ -330,6 +331,11 @@ void DrawObjects(void) {
 	//sceneObjects.push_back(sphere3);
 	//sceneObjects.push_back(sphere4);
 	//sceneObjects.push_back(sphere5);
+
+	Cone *cone = new Cone(glm::vec3(10, -10, -80), 8.f, 3.f);
+	cone->setColor(glm::vec3(0.8, 0.8, 0));
+	cone->setRefractivity(true, 0.7f, 1.2f);
+	sceneObjects.push_back(cone);
 }
 
 //---This function initializes the scene ------------------------------------------- 
