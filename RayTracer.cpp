@@ -108,8 +108,8 @@ glm::vec3 refract(const glm::vec3& I, const glm::vec3& N, float index1, float in
 //----------------------------------------------------------------------------------
 glm::vec3 trace(Ray ray, int step) {
 	glm::vec3 backgroundCol(0);						//Background colour = (0,0,0)
-	glm::vec3 light1Pos(20, 40, -3);					//Light's position
-	glm::vec3 light2Pos(-20, 40, -3);
+	glm::vec3 light1Pos(-20, 15, -10);					//Light's position
+	glm::vec3 light2Pos(20, 15, -10);
 	glm::vec3 color(0);
 	SceneObject* obj;
 
@@ -118,20 +118,24 @@ glm::vec3 trace(Ray ray, int step) {
 	obj = sceneObjects[ray.index];					//object on which the closest point of intersection is found
 
 	//Plane
-	if (ray.index == 4)
+	if (ray.index == 0)
 	{
 		//Chequered pattern
 		int zWidth = 4;
 		int xWidth = 4;
-		int iz = (ray.hit.z) / zWidth;
-		int ix = (ray.hit.x) / xWidth;
+		int iz = int(floor(ray.hit.z / zWidth));
+		int ix = int(floor(ray.hit.x / xWidth));
 		int k = (iz + ix) % 2;
-		if (k == 0) color = glm::vec3(0, 1, 0);
-		else color = glm::vec3(1, 0, 1);
+
+		if (k == 0)
+			color = glm::vec3(0, 1, 0);  // Green
+		else
+			color = glm::vec3(1, 0, 1);  // Magenta
+
 		obj->setColor(color);
 
 		//Texture mapping
-		int x1 = -15;
+		/*int x1 = -15;
 		int x2 = 5;
 		int z1 = -60;
 		int z2 = -90;
@@ -141,7 +145,7 @@ glm::vec3 trace(Ray ray, int step) {
 		{
 			color = texture.getColorAt(texcoords, texcoordt);
 			obj->setColor(color);
-		}
+		}*/
 	}
 
 	//SceneObjects lighting calculations
@@ -158,7 +162,7 @@ glm::vec3 trace(Ray ray, int step) {
 		glm::vec3 reflectedDir = glm::reflect(ray.dir, normalVec);
 		Ray reflectedRay(ray.hit, reflectedDir);
 		glm::vec3 reflectedColor = trace(reflectedRay, step + 1);
-		color = color + (rho * reflectedColor);
+		color = (1.0f - rho) * color + rho * reflectedColor;
 	}
 
 	//Transparency and refractivity
@@ -245,6 +249,89 @@ void display() {
 	glFlush();
 }
 
+void DrawWalls(void) {
+	//floor
+	Plane *plane = new Plane (glm::vec3(-30., -15, -40), //Point A
+							glm::vec3(30., -15, -40), //Point B
+							glm::vec3(30., -15, -150), //Point C
+							glm::vec3(-30., -15, -150)); //Point D
+	plane->setSpecularity(false);
+
+	//roof
+	Plane *plane2 = new Plane(glm::vec3(-30., 15, -40),
+                          glm::vec3(-30., 15, -150),
+                          glm::vec3(30., 15, -150),
+                          glm::vec3(30., 15, -40));
+	plane2->setColor(glm::vec3(0, 0, 1));
+	plane2->setSpecularity(false);
+	
+	Plane *plane3 = new Plane(glm::vec3(-30., -15, -40),
+                          glm::vec3(-30., -15, -150),
+                          glm::vec3(-30., 15, -150),
+                          glm::vec3(-30., 15, -40));
+	plane3->setColor(glm::vec3(1, 0, 0));
+	plane3->setSpecularity(false);
+
+	Plane *plane4 = new Plane(glm::vec3(30., -15, -150),
+                          glm::vec3(30., -15, -40),
+                          glm::vec3(30., 15, -40),
+                          glm::vec3(30., 15, -150));
+	plane4->setColor(glm::vec3(0, 1, 0));
+	plane4->setSpecularity(false);
+
+	Plane *plane5 = new Plane(glm::vec3(-30., -15, -150),
+                          glm::vec3(30., -15, -150),
+                          glm::vec3(30., 15, -150),
+                          glm::vec3(-30., 15, -150));
+	plane5->setColor(glm::vec3(0, 1, 1));
+	plane5->setSpecularity(false);
+
+	sceneObjects.push_back(plane);
+	sceneObjects.push_back(plane2);
+	sceneObjects.push_back(plane3);
+	sceneObjects.push_back(plane4);
+	sceneObjects.push_back(plane5);
+}
+
+void DrawObjects(void) {
+	Plane *mirror = new Plane(
+							glm::vec3(-10., -5, -100),
+							glm::vec3(10., -5, -100),
+							glm::vec3(10., 5, -95),
+							glm::vec3(-10., 5, -95)
+							);
+	mirror->setColor(glm::vec3(1, 1, 1));
+	mirror->setReflectivity(true, 1);
+	mirror->setSpecularity(false);
+
+	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, -10.0, -90.0), 5.0);
+	sphere1->setColor(glm::vec3(0, 0, 1));   //Set colour to blue
+	sphere1->setSpecularity(true);
+	sphere1->setTransparency(true, 0.6);
+
+	Sphere *sphere2 = new Sphere(glm::vec3(5.0, 5.0, -70.0), 4.0);
+	sphere2->setColor(glm::vec3(0, 1, 0));
+	sphere2->setShininess(5);
+
+	Sphere *sphere3 = new Sphere(glm::vec3(10.0, 10.0, -60.0), 3.0);
+	sphere3->setColor(glm::vec3(1, 0, 0));
+
+	Sphere *sphere4 = new Sphere(glm::vec3(5.0, -10.0, -60.0), 5.0);
+	sphere4->setColor(glm::vec3(0.5, 1, 1));
+	sphere4->setTransparency(true, 0.8f);
+
+	Sphere *sphere5 = new Sphere(glm::vec3(-5, -7, -50.0), 4.0);
+	sphere5->setColor(glm::vec3(0.8, 0, 0.8));
+	sphere5->setRefractivity(true, 0.7f, 1.2f);
+
+	sceneObjects.push_back(mirror);
+	sceneObjects.push_back(sphere1);
+	//sceneObjects.push_back(sphere2);
+	//sceneObjects.push_back(sphere3);
+	//sceneObjects.push_back(sphere4);
+	//sceneObjects.push_back(sphere5);
+}
+
 //---This function initializes the scene ------------------------------------------- 
 //   Specifically, it creates scene objects (spheres, planes, cones, cylinders etc)
 //     and add them to the list of scene objects.
@@ -259,40 +346,9 @@ void initialize() {
 
 	texture = TextureBMP("../Butterfly.bmp");
 
-	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, 0.0, -90.0), 15.0);
-	sphere1->setColor(glm::vec3(0, 0, 1));   //Set colour to blue
-	sphere1->setSpecularity(false);
-	sphere1->setReflectivity(true, 0.8);
+	DrawWalls();
 
-	Sphere *sphere2 = new Sphere(glm::vec3(5.0, 5.0, -70.0), 4.0);
-	sphere2->setColor(glm::vec3(0, 1, 0));
-	sphere2->setShininess(5);
-
-	Sphere *sphere3 = new Sphere(glm::vec3(10.0, 10.0, -60.0), 3.0);
-	sphere3->setColor(glm::vec3(1, 0, 0));
-
-	Sphere *sphere4 = new Sphere(glm::vec3(5.0, -10.0, -60.0), 5.0);
-	sphere4->setColor(glm::vec3(0.5, 1, 1));
-	sphere4->setTransparency(true, 0.8f);
-
-	Plane *plane = new Plane (glm::vec3(-20., -15, -40), //Point A
-							  glm::vec3(20., -15, -40), //Point B
-							  glm::vec3(20., -15, -200), //Point C
-							  glm::vec3(-20., -15, -200)); //Point D
-	//plane->setColor(glm::vec3(0.8, 0.8, 0));
-	plane->setSpecularity(false);
-
-	Sphere *sphere5 = new Sphere(glm::vec3(-5, -7, -50.0), 4.0);
-	sphere5->setColor(glm::vec3(0.8, 0, 0.8));
-	sphere5->setRefractivity(true, 0.7f, 1.2f);
-
-	sceneObjects.push_back(sphere1);
-	sceneObjects.push_back(sphere2);
-	sceneObjects.push_back(sphere3);
-	sceneObjects.push_back(sphere4);
-	sceneObjects.push_back(plane);
-	
-	sceneObjects.push_back(sphere5);
+	DrawObjects();
 }
 
 int main(int argc, char *argv[]) {
