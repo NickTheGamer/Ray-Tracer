@@ -18,12 +18,20 @@ using namespace std;
 
 const float EDIST = 40.0;
 const int NUMDIV = 800;
-const int MAX_STEPS = 10;
+const int MAX_STEPS = 5;
 const float XMIN = -10.0;
 const float XMAX = 10.0;
 const float YMIN = -10.0;
 const float YMAX = 10.0;
+
+//Only one of anti-aliasing and depth_of_field can be active,
+// if both are set to true anti-aliasing takes priority
 const bool anti_aliasing = false;
+
+//Depth of field
+const bool depth_of_field = true;
+const float focus_dist = 80.0f;
+const float aperture_radius = 0.8f;
 
 vector<SceneObject*> sceneObjects;
 TextureBMP texture;
@@ -257,6 +265,40 @@ void display() {
 				}
 
 				col = colorSum * 0.25f;  // Average color of 4 samples
+			}
+
+			else if (depth_of_field)
+			{
+				glm::vec3 colorSum(0.0f);
+				int numSamples = 4;
+
+				for (int s = 0; s < numSamples; s++)
+				{
+					// Sample point (center of pixel + randomness)
+					float sampleX = xp + cellX * ((float)rand() / RAND_MAX);
+					float sampleY = yp + cellY * ((float)rand() / RAND_MAX);
+					glm::vec3 pixelPoint(sampleX, sampleY, -EDIST);
+
+					// Compute focal point
+					glm::vec3 dir = glm::normalize(pixelPoint - eye);
+					glm::vec3 focalPoint = eye + dir * focus_dist;
+
+					//Sample a random point on aperture disk (lens)
+					float r = aperture_radius * sqrt((float)rand() / RAND_MAX);
+					float theta = 2.0f * M_PI * ((float)rand() / RAND_MAX);
+
+					float dx = r * cos(theta);
+					float dy = r * sin(theta);
+
+					glm::vec3 lensOrigin = eye + glm::vec3(dx, dy, 0.0f); // lens in xy plane
+					glm::vec3 dofDir = glm::normalize(focalPoint - lensOrigin);
+
+					//Trace
+					Ray ray(lensOrigin, dofDir);
+					colorSum += trace(ray, 1);
+				}
+
+				col = colorSum * (1.0f / numSamples); // Average
 			}
 
 			else

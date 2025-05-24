@@ -11,6 +11,7 @@ float Cylinder::intersect(glm::vec3 rayOrigin, glm::vec3 rayDir) {
     float b = 2.0f * (p.x * rayDir.x + p.z * rayDir.z);
     float c = p.x * p.x + p.z * p.z - radius * radius;
 
+    //Calculate number of intersections with the cylinders' sides
     float discriminant = b * b - 4.0f * a * c;
     float tCylinder = -1.0f;
 
@@ -49,7 +50,7 @@ float Cylinder::intersect(glm::vec3 rayOrigin, glm::vec3 rayDir) {
         }
     }
 
-    // Choose the smallest positive t
+    // Choose the smallest positive t between the sides, top and bottom
     float tFinal = std::numeric_limits<float>::max();
     for (float t : {tCylinder, tBottom, tTop}) {
         if (t > 0 && t < tFinal) {
