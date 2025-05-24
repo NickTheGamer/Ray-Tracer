@@ -29,7 +29,7 @@ const float YMAX = 10.0;
 const bool anti_aliasing = false;
 
 //Depth of field
-const bool depth_of_field = true;
+const bool depth_of_field = false;
 const float focus_dist = 80.0f;
 const float aperture_radius = 0.8f;
 
