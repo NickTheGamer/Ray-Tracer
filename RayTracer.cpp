@@ -11,6 +11,7 @@
 #include "Ray.h"
 #include "Plane.h"
 #include "Cone.h"
+#include "Cylinder.h"
 #include "TextureBMP.h"
 #include <GL/freeglut.h>
 using namespace std;
@@ -305,7 +306,7 @@ void DrawObjects(void) {
 	mirror->setReflectivity(true, 1);
 	mirror->setSpecularity(false);
 
-	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, -10.0, -90.0), 5.0);
+	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, -8.0, -90.0), 5.0);
 	sphere1->setColor(glm::vec3(0, 0, 1));   //Set colour to blue
 	sphere1->setSpecularity(true);
 	sphere1->setTransparency(true, 0.6);
@@ -336,6 +337,11 @@ void DrawObjects(void) {
 	cone->setColor(glm::vec3(0.8, 0.8, 0));
 	cone->setRefractivity(true, 0.7f, 1.2f);
 	sceneObjects.push_back(cone);
+
+	Cylinder* cyl = new Cylinder(glm::vec3(15, -15, -80), 5.0f, 1.0f);
+	cyl->setColor(glm::vec3(0.8, 0.3, 0.3));
+	sceneObjects.push_back(cyl);
+
 }
 
 //---This function initializes the scene ------------------------------------------- 

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8...3.5)
 
 project(ray-tracer)
 
-add_executable(RayTracer.out RayTracer.cpp Ray.cpp SceneObject.cpp Sphere.cpp Plane.cpp Cone.cpp TextureBMP.cpp)
+add_executable(RayTracer.out RayTracer.cpp Ray.cpp SceneObject.cpp Sphere.cpp Plane.cpp Cone.cpp Cylinder.cpp TextureBMP.cpp)
 
 set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
