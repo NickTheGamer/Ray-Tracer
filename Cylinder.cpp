@@ -29,7 +29,7 @@ float Cylinder::intersect(glm::vec3 rayOrigin, glm::vec3 rayDir) {
         }
     }
 
-    // Check intersection with bottom cap
+    // Check bottom
     float tBottom = -1.0f;
     if (std::abs(rayDir.y) > 1e-4f) {
         float t = -p.y / rayDir.y;
@@ -39,7 +39,7 @@ float Cylinder::intersect(glm::vec3 rayOrigin, glm::vec3 rayDir) {
         }
     }
 
-    // Check intersection with top cap
+    // Check top
     float tTop = -1.0f;
     if (std::abs(rayDir.y) > 1e-4f) {
         float t = (height - p.y) / rayDir.y;

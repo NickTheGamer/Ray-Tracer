@@ -1,5 +1,5 @@
 /*==================================================================================
-* A basic ray tracer - Nicholas Coetzee
+* Ray Tracer - Nicholas Coetzee
 *===================================================================================
 */
 #include <iostream>
@@ -23,6 +23,7 @@ const float XMIN = -10.0;
 const float XMAX = 10.0;
 const float YMIN = -10.0;
 const float YMAX = 10.0;
+const bool anti_aliasing = false;
 
 vector<SceneObject*> sceneObjects;
 TextureBMP texture;
@@ -228,19 +229,48 @@ void display() {
 	glLoadIdentity();
 
 	glBegin(GL_QUADS);  //Each cell is a tiny quad.
+	
+	int samples = 4; //Samples per cell
+	float invSamples = 1.0f / samples;
 
-	for (int i = 0; i < NUMDIV; i++) {	//Scan every cell of the image plane
+	for (int i = 0; i < NUMDIV; i++) {    // Scan every cell of the image plane
 		xp = XMIN + i * cellX;
 		for (int j = 0; j < NUMDIV; j++) {
 			yp = YMIN + j * cellY;
 
-			glm::vec3 dir(xp + 0.5 * cellX, yp + 0.5 * cellY, -EDIST);	//direction of the primary ray
+			glm::vec3 col = glm::vec3(1);
 
-			Ray ray = Ray(eye, dir);
+			if (anti_aliasing)
+			{
+				glm::vec3 colorSum(0.0f);
 
-			glm::vec3 col = trace(ray, 1); //Trace the primary ray and get the colour value
+				for (int sx = 0; sx < 2; sx++) {     // 2x2 grid within cell
+					for (int sy = 0; sy < 2; sy++) {
+						float sampleX = xp + (sx + 0.5f) * (cellX * 0.5f);
+						float sampleY = yp + (sy + 0.5f) * (cellY * 0.5f);
+
+						glm::vec3 dir(sampleX, sampleY, -EDIST);
+						Ray ray(eye, dir);
+
+						colorSum += trace(ray, 1);
+					}
+				}
+
+				col = colorSum * 0.25f;  // Average color of 4 samples
+			}
+
+			else
+			{
+				glm::vec3 dir(xp + 0.5 * cellX, yp + 0.5 * cellY, -EDIST);	//direction of the primary ray
+
+				Ray ray = Ray(eye, dir);
+
+				col = trace(ray, 1); //Trace the primary ray and get the colour value
+			}
+
+
 			glColor3f(col.r, col.g, col.b);
-			glVertex2f(xp, yp);				//Draw each cell with its color value
+			glVertex2f(xp, yp);             // Draw each cell with averaged color
 			glVertex2f(xp + cellX, yp);
 			glVertex2f(xp + cellX, yp + cellY);
 			glVertex2f(xp, yp + cellY);
