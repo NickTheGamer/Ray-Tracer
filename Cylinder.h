@@ -19,8 +19,7 @@ private:
 public:
     Cylinder() = default;
 
-    Cylinder(glm::vec3 base, float h, float r)
-        : baseCenter(base), height(h), radius(r) {}
+    Cylinder(glm::vec3 base, float h, float r) : baseCenter(base), height(h), radius(r) {}
 
     float intersect(glm::vec3 p0, glm::vec3 dir);
 

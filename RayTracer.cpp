@@ -144,19 +144,24 @@ glm::vec3 trace(Ray ray, int step) {
 			color = glm::vec3(1, 0, 1);  // Magenta
 
 		obj->setColor(color);
+	}
 
-		//Texture mapping
-		/*int x1 = -15;
-		int x2 = 5;
-		int z1 = -60;
-		int z2 = -90;
-		float texcoords = (ray.hit.x - x1)/(x2 - x1);
-		float texcoordt = (ray.hit.z - z1)/(z2 - z1);
-		if (texcoords > 0 && texcoords < 1 && texcoordt > 0 && texcoordt < 1)
-		{
-			color = texture.getColorAt(texcoords, texcoordt);
-			obj->setColor(color);
-		}*/
+	//Earth texture mapping
+	if (ray.index == 6)
+	{
+		glm::vec3 hitPoint = ray.hit;
+		glm::vec3 center = static_cast<Sphere*>(obj)->getCenter(); //Need to cast to sphere pointer to access method
+		glm::vec3 p = glm::normalize(hitPoint - center); //Point on surface of sphere
+
+		float u = 0.5f - (atan2(p.z, p.x) / (2.0f * M_PI)); //Flipped u coordinates for texture mapping (- instead of +)
+		float v = 0.5f + (asin(p.y) / M_PI); //Flipped v coordinates (+ instead of -)
+
+		//Offset to rotate the texture for aesthetics
+		float offset = 0.25f;
+		u = fmod(u + offset, 1.0f);
+
+		glm::vec3 texColor = texture.getColorAt(u, v);
+		obj->setColor(texColor);
 	}
 
 	//SceneObjects lighting calculations
@@ -339,13 +344,15 @@ void DrawWalls(void) {
 	plane2->setColor(glm::vec3(0, 0, 1));
 	plane2->setSpecularity(false);
 	
+	//left wall
 	Plane *plane3 = new Plane(glm::vec3(-30., -15, -40),
                           glm::vec3(-30., -15, -150),
                           glm::vec3(-30., 15, -150),
                           glm::vec3(-30., 15, -40));
 	plane3->setColor(glm::vec3(1, 0, 0));
 	plane3->setSpecularity(false);
-
+	
+	//right wall
 	Plane *plane4 = new Plane(glm::vec3(30., -15, -150),
                           glm::vec3(30., -15, -40),
                           glm::vec3(30., 15, -40),
@@ -353,6 +360,7 @@ void DrawWalls(void) {
 	plane4->setColor(glm::vec3(0, 1, 0));
 	plane4->setSpecularity(false);
 
+	//back wall
 	Plane *plane5 = new Plane(glm::vec3(-30., -15, -150),
                           glm::vec3(30., -15, -150),
                           glm::vec3(30., 15, -150),
@@ -379,9 +387,8 @@ void DrawObjects(void) {
 	mirror->setSpecularity(false);
 
 	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, -8.0, -90.0), 5.0);
-	sphere1->setColor(glm::vec3(0, 0, 1));   //Set colour to blue
-	sphere1->setSpecularity(true);
-	sphere1->setTransparency(true, 0.6);
+	sphere1->setSpecularity(false);
+	//sphere1->setTransparency(true, 0.6);
 
 	Sphere *sphere2 = new Sphere(glm::vec3(5.0, 5.0, -70.0), 4.0);
 	sphere2->setColor(glm::vec3(0, 1, 0));
@@ -428,7 +435,7 @@ void initialize() {
 
 	glClearColor(0, 0, 0, 1);
 
-	texture = TextureBMP("../Butterfly.bmp");
+	texture = TextureBMP("../Earth.bmp");
 
 	DrawWalls();
 

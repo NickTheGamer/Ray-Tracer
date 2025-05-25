@@ -40,3 +40,8 @@ glm::vec3 Sphere::normal(glm::vec3 p) {
 	n = glm::normalize(n);
 	return n;
 }
+
+glm::vec3 Sphere::getCenter()
+{
+	return center;
+}

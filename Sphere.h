@@ -28,6 +28,8 @@ public:
 	float intersect(glm::vec3 p0, glm::vec3 dir);
 
 	glm::vec3 normal(glm::vec3 p);
+
+	glm::vec3 getCenter();
 };
 
 #endif //!H_SPHERE

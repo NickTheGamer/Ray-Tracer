@@ -1,8 +1,10 @@
 #include "Cylinder.h"
 #include <glm/glm.hpp>
 #include <cmath>
-#include <initializer_list>
 #include <limits>
+
+//For iterations through possible t values
+#include <initializer_list>
 
 float Cylinder::intersect(glm::vec3 rayOrigin, glm::vec3 rayDir) {
     glm::vec3 p = rayOrigin - baseCenter;
