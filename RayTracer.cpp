@@ -26,6 +26,7 @@ const float YMAX = 10.0;
 
 //Only one of anti-aliasing and depth_of_field can be active,
 // if both are set to true anti-aliasing takes priority
+// Both have significantly increased render times
 const bool anti_aliasing = false;
 
 //Depth of field
@@ -128,7 +129,7 @@ glm::vec3 trace(Ray ray, int step) {
 	if(ray.index == -1) return backgroundCol;		//no intersection
 	obj = sceneObjects[ray.index];					//object on which the closest point of intersection is found
 
-	//Plane
+	//Floor
 	if (ray.index == 0)
 	{
 		//Chequered pattern
@@ -388,11 +389,13 @@ void DrawObjects(void) {
 
 	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, -8.0, -90.0), 5.0);
 	sphere1->setSpecularity(false);
-	//sphere1->setTransparency(true, 0.6);
 
 	Sphere *sphere2 = new Sphere(glm::vec3(5.0, 5.0, -70.0), 4.0);
 	sphere2->setColor(glm::vec3(0, 1, 0));
 	sphere2->setShininess(5);
+	//Flatten it slightly
+	sphere2->setTransform(glm::vec3(1.0f, 0.6f, 1.0f));
+
 
 	Sphere *sphere3 = new Sphere(glm::vec3(10.0, 10.0, -60.0), 3.0);
 	sphere3->setColor(glm::vec3(1, 0, 0));
@@ -407,7 +410,7 @@ void DrawObjects(void) {
 
 	sceneObjects.push_back(mirror);
 	sceneObjects.push_back(sphere1);
-	//sceneObjects.push_back(sphere2);
+	sceneObjects.push_back(sphere2);
 	//sceneObjects.push_back(sphere3);
 	//sceneObjects.push_back(sphere4);
 	//sceneObjects.push_back(sphere5);
