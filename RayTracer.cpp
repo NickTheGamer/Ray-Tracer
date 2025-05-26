@@ -140,9 +140,9 @@ glm::vec3 trace(Ray ray, int step) {
 		int k = (iz + ix) % 2;
 
 		if (k == 0)
-			color = glm::vec3(0, 1, 0);  // Green
+			color = glm::vec3(0.1f, 1.0f, 0.9f);  // Green
 		else
-			color = glm::vec3(1, 0, 1);  // Magenta
+			color = glm::vec3(0.9f, 0.2f, 0.5f);  // Magenta
 
 		obj->setColor(color);
 	}
@@ -342,7 +342,7 @@ void DrawWalls(void) {
                           glm::vec3(-30., 15, -150),
                           glm::vec3(30., 15, -150),
                           glm::vec3(30., 15, -40));
-	plane2->setColor(glm::vec3(0, 0, 1));
+	plane2->setColor(glm::vec3(0.2f, 0.8f, 0.75f));
 	plane2->setSpecularity(false);
 	
 	//left wall
@@ -350,7 +350,7 @@ void DrawWalls(void) {
                           glm::vec3(-30., -15, -150),
                           glm::vec3(-30., 15, -150),
                           glm::vec3(-30., 15, -40));
-	plane3->setColor(glm::vec3(1, 0, 0));
+	plane3->setColor(glm::vec3(0.9f, 0.75f, 0.3f));
 	plane3->setSpecularity(false);
 	
 	//right wall
@@ -358,7 +358,7 @@ void DrawWalls(void) {
                           glm::vec3(30., -15, -40),
                           glm::vec3(30., 15, -40),
                           glm::vec3(30., 15, -150));
-	plane4->setColor(glm::vec3(0, 1, 0));
+	plane4->setColor(glm::vec3(0.8f, 0.4f, 0.2f));
 	plane4->setSpecularity(false);
 
 	//back wall
@@ -366,7 +366,7 @@ void DrawWalls(void) {
                           glm::vec3(30., -15, -150),
                           glm::vec3(30., 15, -150),
                           glm::vec3(-30., 15, -150));
-	plane5->setColor(glm::vec3(0, 1, 1));
+	plane5->setColor(glm::vec3(0.35f, 0.2f, 0.35f));
 	plane5->setSpecularity(false);
 
 	sceneObjects.push_back(plane);
@@ -380,8 +380,8 @@ void DrawObjects(void) {
 	Plane *mirror = new Plane(
 							glm::vec3(-10., -5, -100),
 							glm::vec3(10., -5, -100),
-							glm::vec3(10., 5, -95),
-							glm::vec3(-10., 5, -95)
+							glm::vec3(10., 5, -98),
+							glm::vec3(-10., 5, -98)
 							);
 	mirror->setColor(glm::vec3(1, 1, 1));
 	mirror->setReflectivity(true, 1);
@@ -390,38 +390,28 @@ void DrawObjects(void) {
 	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, -8.0, -90.0), 5.0);
 	sphere1->setSpecularity(false);
 
-	Sphere *sphere2 = new Sphere(glm::vec3(5.0, 5.0, -70.0), 4.0);
-	sphere2->setColor(glm::vec3(0, 1, 0));
-	sphere2->setShininess(5);
+	Sphere *sphere2 = new Sphere(glm::vec3(5.0, -10.0, -60.0), 5.0);
+	sphere2->setColor(glm::vec3(0.8, 0.2, 0.2));
+	sphere2->setTransparency(true, 0.7f);
 	//Flatten it slightly
-	sphere2->setTransform(glm::vec3(1.0f, 0.6f, 1.0f));
+	sphere2->setTransform(glm::vec3(1.0f, 0.5f, 1.0f));
 
+	Sphere *sphere3 = new Sphere(glm::vec3(-5, -7, -50.0), 4.0);
+	sphere3->setColor(glm::vec3(0.8, 0, 0.8));
+	sphere3->setRefractivity(true, 0.7f, 1.5f);
 
-	Sphere *sphere3 = new Sphere(glm::vec3(10.0, 10.0, -60.0), 3.0);
-	sphere3->setColor(glm::vec3(1, 0, 0));
+	Cone *cone = new Cone(glm::vec3(5, -10, -80), 8.f, 3.f);
+	cone->setColor(glm::vec3(0.8, 0.8, 0));
+	cone->setRefractivity(true, 0.8f, 1.2f);
 
-	Sphere *sphere4 = new Sphere(glm::vec3(5.0, -10.0, -60.0), 5.0);
-	sphere4->setColor(glm::vec3(0.5, 1, 1));
-	sphere4->setTransparency(true, 0.8f);
-
-	Sphere *sphere5 = new Sphere(glm::vec3(-5, -7, -50.0), 4.0);
-	sphere5->setColor(glm::vec3(0.8, 0, 0.8));
-	sphere5->setRefractivity(true, 0.7f, 1.2f);
+	Cylinder* cyl = new Cylinder(glm::vec3(15, -15, -80), 5.0f, 1.0f);
+	cyl->setColor(glm::vec3(0.8, 0.3, 0.3));
 
 	sceneObjects.push_back(mirror);
 	sceneObjects.push_back(sphere1);
 	sceneObjects.push_back(sphere2);
-	//sceneObjects.push_back(sphere3);
-	//sceneObjects.push_back(sphere4);
-	//sceneObjects.push_back(sphere5);
-
-	Cone *cone = new Cone(glm::vec3(10, -10, -80), 8.f, 3.f);
-	cone->setColor(glm::vec3(0.8, 0.8, 0));
-	cone->setRefractivity(true, 0.7f, 1.2f);
+	sceneObjects.push_back(sphere3);
 	sceneObjects.push_back(cone);
-
-	Cylinder* cyl = new Cylinder(glm::vec3(15, -15, -80), 5.0f, 1.0f);
-	cyl->setColor(glm::vec3(0.8, 0.3, 0.3));
 	sceneObjects.push_back(cyl);
 
 }
