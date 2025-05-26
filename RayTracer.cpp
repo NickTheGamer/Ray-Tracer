@@ -18,11 +18,14 @@ using namespace std;
 
 const float EDIST = 40.0;
 const int NUMDIV = 800;
-const int MAX_STEPS = 5;
+const int MAX_STEPS = 10;
 const float XMIN = -10.0;
 const float XMAX = 10.0;
 const float YMIN = -10.0;
 const float YMAX = 10.0;
+
+//Two light sources can be a bit bright, so this represents a percenage of max light
+float brightness = 0.85f;
 
 //Only one of anti-aliasing and depth_of_field can be active,
 // if both are set to true anti-aliasing takes priority
@@ -31,7 +34,7 @@ const bool anti_aliasing = false;
 
 //Depth of field
 const bool depth_of_field = false;
-const float focus_dist = 80.0f;
+const float focus_dist = 72.5f;
 const float aperture_radius = 0.8f;
 
 vector<SceneObject*> sceneObjects;
@@ -120,8 +123,8 @@ glm::vec3 refract(const glm::vec3& I, const glm::vec3& N, float index1, float in
 //----------------------------------------------------------------------------------
 glm::vec3 trace(Ray ray, int step) {
 	glm::vec3 backgroundCol(0);						//Background colour = (0,0,0)
-	glm::vec3 light1Pos(-20, 15, -10);					//Light's position
-	glm::vec3 light2Pos(20, 15, -10);
+	glm::vec3 light1Pos(-25, 14, -15);				//Light's position
+	glm::vec3 light2Pos(25, 14, -15);
 	glm::vec3 color(0);
 	SceneObject* obj;
 
@@ -140,9 +143,9 @@ glm::vec3 trace(Ray ray, int step) {
 		int k = (iz + ix) % 2;
 
 		if (k == 0)
-			color = glm::vec3(0.1f, 1.0f, 0.9f);  // Green
+			color = glm::vec3(0.65f, 0.3f, 0.2f);
 		else
-			color = glm::vec3(0.9f, 0.2f, 0.5f);  // Magenta
+			color = glm::vec3(0.85f, 0.65f, 0.25f);
 
 		obj->setColor(color);
 	}
@@ -165,8 +168,8 @@ glm::vec3 trace(Ray ray, int step) {
 		obj->setColor(texColor);
 	}
 
-	//SceneObjects lighting calculations
-	color = obj->lighting(light1Pos, -ray.dir, ray.hit) + obj->lighting(light2Pos, -ray.dir, ray.hit);
+	//SceneObjects lighting calculations (reduce brightness slightly)
+	color = brightness * (obj->lighting(light1Pos, -ray.dir, ray.hit) + obj->lighting(light2Pos, -ray.dir, ray.hit));
 
 	//Custom Shadows (2 light sources)
 	color = shadows(ray, color, light1Pos, light2Pos, obj);
@@ -350,7 +353,7 @@ void DrawWalls(void) {
                           glm::vec3(-30., -15, -150),
                           glm::vec3(-30., 15, -150),
                           glm::vec3(-30., 15, -40));
-	plane3->setColor(glm::vec3(0.9f, 0.75f, 0.3f));
+	plane3->setColor(glm::vec3(0.4f, 0.45f, 0.6f));
 	plane3->setSpecularity(false);
 	
 	//right wall
@@ -358,7 +361,7 @@ void DrawWalls(void) {
                           glm::vec3(30., -15, -40),
                           glm::vec3(30., 15, -40),
                           glm::vec3(30., 15, -150));
-	plane4->setColor(glm::vec3(0.8f, 0.4f, 0.2f));
+	plane4->setColor(glm::vec3(0.4f, 0.45f, 0.6f));
 	plane4->setSpecularity(false);
 
 	//back wall
@@ -378,42 +381,41 @@ void DrawWalls(void) {
 
 void DrawObjects(void) {
 	Plane *mirror = new Plane(
-							glm::vec3(-10., -5, -100),
-							glm::vec3(10., -5, -100),
-							glm::vec3(10., 5, -98),
-							glm::vec3(-10., 5, -98)
+							glm::vec3(-12., 0, -100),
+							glm::vec3(12., 0, -100),
+							glm::vec3(12., 10, -97),
+							glm::vec3(-12., 10, -97)
 							);
 	mirror->setColor(glm::vec3(1, 1, 1));
 	mirror->setReflectivity(true, 1);
 	mirror->setSpecularity(false);
 
-	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, -8.0, -90.0), 5.0);
+	Sphere *sphere1 = new Sphere(glm::vec3(-7.5, -5.0, -85.0), 4.0);
 	sphere1->setSpecularity(false);
 
-	Sphere *sphere2 = new Sphere(glm::vec3(5.0, -10.0, -60.0), 5.0);
-	sphere2->setColor(glm::vec3(0.8, 0.2, 0.2));
-	sphere2->setTransparency(true, 0.7f);
+	Sphere *sphere2 = new Sphere(glm::vec3(-8.5, -5, -72.5), 2);
+	sphere2->setColor(glm::vec3(0.8, 0, 0.8));
+	sphere2->setRefractivity(true, 0.7f, 1.5f);
+
+	Cylinder* cyl = new Cylinder(glm::vec3(8.5, -7.5, -85), 6.0f, 2.0f);
+	cyl->setColor(glm::vec3(0.0f, 0.5f, 0.425f));
+	cyl->setSpecularity(false);
+
+	Sphere *sphere3 = new Sphere(glm::vec3(1, -10.5, -70.0), 3.5);
+	sphere3->setColor(glm::vec3(0.9, 0, 0));
+	sphere3->setTransparency(true, 0.5f);
 	//Flatten it slightly
-	sphere2->setTransform(glm::vec3(1.0f, 0.5f, 1.0f));
+	sphere3->setTransform(glm::vec3(1.0f, 0.5f, 1.0f));
 
-	Sphere *sphere3 = new Sphere(glm::vec3(-5, -7, -50.0), 4.0);
-	sphere3->setColor(glm::vec3(0.8, 0, 0.8));
-	sphere3->setRefractivity(true, 0.7f, 1.5f);
-
-	Cone *cone = new Cone(glm::vec3(5, -10, -80), 8.f, 3.f);
-	cone->setColor(glm::vec3(0.8, 0.8, 0));
-	cone->setRefractivity(true, 0.8f, 1.2f);
-
-	Cylinder* cyl = new Cylinder(glm::vec3(15, -15, -80), 5.0f, 1.0f);
-	cyl->setColor(glm::vec3(0.8, 0.3, 0.3));
+	Cone *cone = new Cone(glm::vec3(1, -7, -70), 8.f, 3.f);
+	cone->setColor(glm::vec3(0.48f, 0.45f, 0.39f));
 
 	sceneObjects.push_back(mirror);
 	sceneObjects.push_back(sphere1);
 	sceneObjects.push_back(sphere2);
+	sceneObjects.push_back(cyl);
 	sceneObjects.push_back(sphere3);
 	sceneObjects.push_back(cone);
-	sceneObjects.push_back(cyl);
-
 }
 
 //---This function initializes the scene ------------------------------------------- 

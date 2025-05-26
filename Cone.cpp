@@ -38,8 +38,8 @@ float Cone::intersect(glm::vec3 rayOrigin, glm::vec3 rayDir) {
     float hitY = hitPoint.y;
 
     // Check vertical bounds
-    float minY = apex.y;
-    float maxY = apex.y + height;
+    float minY = apex.y - height;
+    float maxY = apex.y;
     if (hitY < minY || hitY > maxY)
         return -1.0f;
 
